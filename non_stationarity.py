@@ -36,8 +36,26 @@ def get_usable_data(ticker_choice, start_date, end_date):
         print(x)
     else:
         print('The ticker', ticker_choice, 'does not exist or may be removed from Yahoo finance API, please use another one', file = sys.stderr)
+    return x
 
-ticker_choice = 'AAPL'
-start_date = '2010-01-01'
-end_date = '2023-12-31'
-prices = get_usable_data(ticker_choice, start_date, end_date)
+ticker_choice = 'AAPL' # choosing the stock we want to analyze
+start_date = '2010-01-01' # choosing beginning of the period
+end_date = '2023-12-31' # choosing end of the period
+stock_prices = get_usable_data(ticker_choice, start_date, end_date) # running the function
+
+stock_prices = stock_prices.dropna() # dropping NAs (rows with dividends)
+stock_prices = stock_prices['Adj Close'] # taking adjusted close prices
+
+plt.plot(stock_prices) # plotting stock prices to eventually visualize non-stationarity
+plt.xlabel("Time")
+plt.ylabel(ticker_choice)
+plt.title("Plot of daily stock prices")
+plt.show()
+
+"""
+In the Apple example, and probably in many other cases when it comes to stocks,
+by looking at the time series plot we can already observe that the time series does not seem to be centered around zero and
+does not seem to revert to a specific mean. Meaning, this time series probably displays a drift.
+"""
+
+# Computationally inspecting for time series characteristic
