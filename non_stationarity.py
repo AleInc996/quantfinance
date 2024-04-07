@@ -64,59 +64,51 @@ One of the most used and common statistical approach to detect non-stationarity 
 
 The idea is to try from the simplest model (no drift and no trend) 
 to the most complicated one (drift plus trend plus linearity plus quadratic) until we no longer find a unit root in the test.
-The unit root is found when the p value is high and the t-statistic produces a low value.
+The unit root is found when the p value is high and the t-statistic produces a low value. More specifically, when the p value is
+higher than the level of significance (given that the test is built with 0.01, 0.05 and 0.1 levels, we go for the medium one, 0.05).
 When the opposite happens, then we will reject the null hypothesis in favor of the alternative one and
 we will select the last tried model.
+
+The possible model are:
+    
+    1. "n": without drift and without trend
+    2. "c": with drift and without trend
+    3. "ct": with drift and with trend
+    4. "ctt": with drift, with trend and assuming linear and quadratic relationship
 """
 
-## Tentative 1: ADF test for time series without drift and without trend
-adf_no_drift_no_trend = ADF(stock_prices, trend = "n", method = "bic") 
-print("ADF Unit Root Test summary \n", adf_no_drift_no_trend.regression.summary()) # printing regression summary
-print("\nTest statistics and critical values: \n", adf_no_drift_no_trend) # printing p-value and t-statistic
-
-adf_no_drift_no_trend = ADF(stock_prices, trend = "n", method = "aic")
-print("ADF Unit Root Test summary \n", adf_no_drift_no_trend.regression.summary()) # printing regression summary
-print("\nTest statistics and critical values: \n", adf_no_drift_no_trend) # printing p-value and t-statistic
-
-## Tentative 2: ADF test for time series with drift and without trend
-adf_yes_drift_no_trend = ADF(stock_prices, trend = "c", method = "bic")
-print("ADF Unit Root Test summary \n", adf_yes_drift_no_trend.regression.summary()) # printing regression summary
-print("\nTest statistics and critical values: \n", adf_yes_drift_no_trend) # printing p-value and t-statistic
-
-adf_yes_drift_no_trend = ADF(stock_prices, trend = "c", method = "aic")
-print("ADF Unit Root Test summary \n", adf_yes_drift_no_trend.regression.summary()) # printing regression summary
-print("\nTest statistics and critical values: \n", adf_yes_drift_no_trend) # printing p-value and t-statistic
-
-## Tentative 3: ADF test for time series with drift and with trend
-adf_yes_drift_yes_trend = ADF(stock_prices, trend = "ct", method = "bic")
-print("ADF Unit Root Test summary \n", adf_yes_drift_yes_trend.regression.summary()) # printing regression summary
-print("\nTest statistics and critical values: \n", adf_yes_drift_yes_trend) # printing p-value and t-statistic
-
-adf_yes_drift_yes_trend = ADF(stock_prices, trend = "ct", method = "aic")
-print("ADF Unit Root Test summary \n", adf_yes_drift_yes_trend.regression.summary()) # printing regression summary
-print("\nTest statistics and critical values: \n", adf_yes_drift_yes_trend) # printing p-value and t-statistic
-
-## Tentative 4: ADF test for time series with drift, with trend and assuming linear and quadratic relationship
-adf_yes_drift_yes_trend_q = ADF(stock_prices, trend = "ctt", method = "bic")
-print("ADF Unit Root Test summary \n", adf_yes_drift_yes_trend_q.regression.summary()) # printing regression summary
-print("\nTest statistics and critical values: \n", adf_yes_drift_yes_trend_q) # printing p-value and t-statistic
-
-adf_yes_drift_yes_trend_q = ADF(stock_prices, trend = "ctt", method = "aic")
-print("ADF Unit Root Test summary \n", adf_yes_drift_yes_trend_q.regression.summary()) # printing regression summary
-print("\nTest statistics and critical values: \n", adf_yes_drift_yes_trend_q) # printing p-value and t-statistic
+model_list = ["n", "c", "ct", "ctt"]
+for i in model_list:
+    x = ADF(stock_prices, trend = i, method = "bic") # we can alternatively select aic method, instead of bic
+    if x.pvalue >= 0.05:
+        print("With model selection ", i, " the process has a unit root and it is not weakly stationary. Proceeding with next model selection")
+        continue
+    else:
+        print("The process is weakly stationary, due to the fact that the p-value ", x.pvalue, " is less than significance level 0.05")
+        print("The model selected is ", i)
+        break
 
 """
-In the default example for Apple, we observe that we reject null hypothesis on tentative 4.
-This means that the time series considered has a drift and a trend.
+In the default example for Apple prices, we observe that we never reject the null hypothesis.
 
-One way to confirm this is to run another statistical test on the selected model: the KPSS one.
+One way to confirm this is to run another statistical test on the selected model or on the more complicated model: the KPSS one.
 The KPSS aims at checking, as well, the presence of stationarity in a time series.
 
-The difference with the ADF test is that the reasoning on the p-value is opposite: accepting the null hypothesis means that there is no unit root.
+The difference with the ADF test is that the reasoning on the p-value is opposite: accepting the null hypothesis means that there is no unit root,
+and that therefore the process is weakly stationary.
 Therefore, please make sure that the model selected produces a low p-value under KPSS test.
 """
 
-KPSS(stock_prices, trend = "ct") # KPSS test for time series with drift and trend
+kpss = KPSS(stock_prices, trend = "ct") # KPSS test for time series with drift and trend, ctt is not available here
+if kpss.pvalue >= 0.05:
+    print("The process is weakly stationary, due to the fact that the p-value ", kpss.pvalue, " is higher than significance level 0.05")
+else:
+    print("The process is not weakly stationary, due to the fact that the p-value ", kpss.pvalue, " is less than significance level 0.05")
+
+"""
+Here we observed that no model selection allows us to have the stock prices time series in a stationary setting.
+Therefore, we move on with considering returns instead of prices.
+"""
 
 #-------------------------------------------------------------------------------------------------
 
@@ -131,63 +123,46 @@ plt.ylabel(ticker_choice)
 plt.title("Plot of daily stock returns")
 plt.show()
 
-## Tentative 1: ADF test for time series without drift and without trend
-adf_no_drift_no_trend = ADF(stock_returns, trend = "n", method = "bic") 
-print("ADF Unit Root Test summary \n", adf_no_drift_no_trend.regression.summary()) # printing regression summary
-print("\nTest statistics and critical values: \n", adf_no_drift_no_trend) # printing p-value and t-statistic
-
-adf_no_drift_no_trend = ADF(stock_returns, trend = "n", method = "aic")
-print("ADF Unit Root Test summary \n", adf_no_drift_no_trend.regression.summary()) # printing regression summary
-print("\nTest statistics and critical values: \n", adf_no_drift_no_trend) # printing p-value and t-statistic
-
-## Tentative 2: ADF test for time series with drift and without trend
-adf_yes_drift_no_trend = ADF(stock_returns, trend = "c", method = "bic")
-print("ADF Unit Root Test summary \n", adf_yes_drift_no_trend.regression.summary()) # printing regression summary
-print("\nTest statistics and critical values: \n", adf_yes_drift_no_trend) # printing p-value and t-statistic
-
-adf_yes_drift_no_trend = ADF(stock_returns, trend = "c", method = "aic")
-print("ADF Unit Root Test summary \n", adf_yes_drift_no_trend.regression.summary()) # printing regression summary
-print("\nTest statistics and critical values: \n", adf_yes_drift_no_trend) # printing p-value and t-statistic
-
-## Tentative 3: ADF test for time series with drift and with trend
-adf_yes_drift_yes_trend = ADF(stock_returns, trend = "ct", method = "bic")
-print("ADF Unit Root Test summary \n", adf_yes_drift_yes_trend.regression.summary()) # printing regression summary
-print("\nTest statistics and critical values: \n", adf_yes_drift_yes_trend) # printing p-value and t-statistic
-
-adf_yes_drift_yes_trend = ADF(stock_returns, trend = "ct", method = "aic")
-print("ADF Unit Root Test summary \n", adf_yes_drift_yes_trend.regression.summary()) # printing regression summary
-print("\nTest statistics and critical values: \n", adf_yes_drift_yes_trend) # printing p-value and t-statistic
-
-## Tentative 4: ADF test for time series with drift, with trend and assuming linear and quadratic relationship
-adf_yes_drift_yes_trend_q = ADF(stock_returns, trend = "ctt", method = "bic")
-print("ADF Unit Root Test summary \n", adf_yes_drift_yes_trend_q.regression.summary()) # printing regression summary
-print("\nTest statistics and critical values: \n", adf_yes_drift_yes_trend_q) # printing p-value and t-statistic
-
-adf_yes_drift_yes_trend_q = ADF(stock_returns, trend = "ctt", method = "aic")
-print("ADF Unit Root Test summary \n", adf_yes_drift_yes_trend_q.regression.summary()) # printing regression summary
-print("\nTest statistics and critical values: \n", adf_yes_drift_yes_trend_q) # printing p-value and t-statistic
+for i in model_list:
+    x = ADF(stock_returns, trend = i, method = "bic") # we can alternatively select aic method, instead of bic
+    if x.pvalue >= 0.05:
+        print("With model selection ", i, " the process has a unit root and it is not weakly stationary. Proceeding with next model selection")
+        continue
+    else:
+        print("The process is weakly stationary, due to the fact that the p-value ", x.pvalue, " is less than significance level 0.05")
+        print("The model selected is ", i)
+        break
 
 """
 In the default example for Apple, we observe that we reject null hypothesis on tentative 1.
 This means that the time series considered does not have a drift and trend.
 
-One way to confirm this is to run other statistical tests on the selected model: the KPSS one.
-The KPSS aims at checking, as well, the presence of stationarity in a time series.
-
-This time, in addition to KPSS test, we also run Variance Ratio test, Phillips-Perron test and Zivot Andrews test.
-The logic behind this three, in terms of approach to assess the resulted p-value and t-statistic, is the same as for KPSS.
+This time, instead of running the KPSS test for confirmation, we run Variance Ratio test, Phillips-Perron test and Zivot Andrews test.
+The logic behind this three, in terms of approach to assess the resulted p-value and t-statistic, is the opposite than for KPSS.
 """
 # Variance Ratio test
 var_ratio = VarianceRatio(stock_returns, 12) # 1-period return is compared with multiperiod return, we selected 12-period, where each period is a month
-var_ratio.summary() # checking results
+if var_ratio.pvalue >= 0.05:
+    print("The process is not weakly stationary, due to the fact that the p-value ", var_ratio.pvalue, " is higher than significance level 0.05")
+else:
+    print("The process is weakly stationary, due to the fact that the p-value ", var_ratio.pvalue, " is less than significance level 0.05")
+
 
 # Phillips-Perron test
 phil_perr = PhillipsPerron(stock_returns, trend = 'n') # selecting model 'n' because in default example for Apple returns this is the identified model
-phil_perr.summary()
+if phil_perr.pvalue >= 0.05:
+    print("The process is not weakly stationary, due to the fact that the p-value ", phil_perr.pvalue, " is higher than significance level 0.05")
+else:
+    print("The process is weakly stationary, due to the fact that the p-value ", phil_perr.pvalue, " is less than significance level 0.05")
+
 
 # Zivot Andrews test
 ziv_and = ZivotAndrews(stock_returns, method='bic')
-ziv_and.summary()
+if ziv_and.pvalue >= 0.05:
+    print("The process is not weakly stationary, due to the fact that the p-value ", ziv_and.pvalue, " is higher than significance level 0.05")
+else:
+    print("The process is weakly stationary, due to the fact that the p-value ", ziv_and.pvalue, " is less than significance level 0.05")
+
 
 """
 But your question would be: why all of this? Why checking for stationarity or non-stationarity of a time series is so important?
