@@ -13,6 +13,11 @@ seasonality, trends and structural breaks in the input dataset are key points to
 This script analyzes the mentioned problem, leaving the user the freedom to select the desired data.
 """
 
+pip install arch.unitroot
+pip install yfinance
+pip install yfinance.shared
+pip install statsmodels
+
 ### Stock modeling in the presence of non-stationarity
 
 # importing main libraries
