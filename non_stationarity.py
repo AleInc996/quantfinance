@@ -13,10 +13,10 @@ seasonality, trends and structural breaks in the input dataset are key points to
 This script analyzes the mentioned problem, leaving the user the freedom to select the desired data.
 """
 
-pip install arch.unitroot
-pip install yfinance
-pip install yfinance.shared
-pip install statsmodels
+#pip install arch.unitroot
+#pip install yfinance
+#pip install yfinance.shared
+#pip install statsmodels
 
 ### Stock modeling in the presence of non-stationarity
 
@@ -40,7 +40,7 @@ def get_usable_data(ticker_choice, start_date, end_date):
     
     "This function simply accesses yahoo finance API to obtain prices data and returns an error if the written ticker does not exist"
     
-    x = yf.download(ticker_choice, start = start_date, end = end_date) # returns daily prices of the selected ticker
+    x = yf.download(ticker_choice, start = start_date, end = end_date, multi_level_index = False, auto_adjust = False) # returns daily prices of the selected ticker
     if not list(shared._ERRORS.keys()):
         print(x)
     else:
