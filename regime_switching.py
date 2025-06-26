@@ -22,7 +22,7 @@ from statsmodels.tsa.regime_switching.markov_autoregression import MarkovAutoreg
 
 
 # function for data retrieval first defined in non_stationarity code of the repo
-def get_usable_data(ticker_choice, start_date, end_date):
+def get_usable_data(ticker_choice, start_date, end_date, frequency = '1d'):
     
     """
     This function simply accesses yahoo finance API to obtain prices data 
@@ -30,7 +30,7 @@ def get_usable_data(ticker_choice, start_date, end_date):
     In addition to the ticker, this function takes beginning and end dates as inputs.
     """
     
-    x = yf.download(ticker_choice, start = start_date, end = end_date, multi_level_index = False, auto_adjust = False) # returns daily prices of the selected ticker
+    x = yf.download(ticker_choice, start = start_date, end = end_date, interval = frequency, multi_level_index = False, auto_adjust = False) # returns daily prices of the selected ticker
     if not list(shared._ERRORS.keys()):
         print(x)
     else:
@@ -40,6 +40,7 @@ def get_usable_data(ticker_choice, start_date, end_date):
 ticker_choice = 'AAPL' # choosing the stock we want to analyze
 start_date = '2019-01-01' # choosing beginning of the period
 end_date = '2022-12-31' # choosing end of the period
+frequency = '1d' # choosing the frequency of prices data, it can be one of the following: 1d, 5d, 1mo, 3mo, 6mo, 1y, 2y, 5y, 10y, ytd, max
 stock_prices = get_usable_data(ticker_choice, start_date, end_date) # running the function
 
 stock_prices['Stock returns'] = stock_prices['Adj Close'].pct_change() # calculating returns as prices percentage changes
@@ -87,9 +88,9 @@ plt.show() # displaying the plot in the plots environment
 
 
 ## Markov autoregression model estimation with multiple possibilities for number of states
-number_states = [2, 3, 4, 5]  # estimation under different numbers of states
-aligned_dates_sp = stock_data['Date'][1:].reset_index(drop = True)
-aligned_dates_mp = aligned_dates_sp[1:].reset_index(drop = True)
+number_states = [2, 3, 4, 5]  # estimation under different numbers of states, you can change this to whatever you wish
+aligned_dates_sp = stock_data['Date'][1:].reset_index(drop = True) # aligning length of dates to length of smoothed marginal probabilities
+aligned_dates_mp = aligned_dates_sp[1:].reset_index(drop = True) # aligning length of dates to length of model forecasted stock returns
 
 for number_state in number_states: # looping over the established number of states
 
@@ -122,7 +123,7 @@ for number_state in number_states: # looping over the established number of stat
     
     
 ## Markov autoregression model estimation with single possibility for number of states and allowing for constant or varying mean and/or variance
-number_states = [2]  # estimation under only one number of states
+number_states = [2]  # estimation under only one number of states, you can set this to whatever number you wish
 aligned_dates_sp = stock_data['Date'][1:].reset_index(drop = True)
 aligned_dates_mp = aligned_dates_sp[1:].reset_index(drop = True)
 
@@ -163,7 +164,7 @@ for number_state in number_states: # looping over the established number of stat
     print("BIC:", aic_study2) # printing BIC value
 
 
-number_states = [2]  # estimation under only one number of states
+number_states = [2]  # estimation under only one number of states, you can set this to whatever number you wish
 aligned_dates_sp = stock_data['Date'][1:].reset_index(drop = True)
 aligned_dates_mp = aligned_dates_sp[1:].reset_index(drop = True)
 
@@ -245,21 +246,20 @@ for number_state in number_states: # looping over the established number of stat
 
 
 
-# Example AIC and BIC values for different models
-aic_values = [aic_study2, aic_study3, aic_study4]
-bic_values = [bic_study2, bic_study3, bic_study4]
+aic_values = [aic_study2, aic_study3, aic_study4] # grouping AIC values from different models together
+bic_values = [bic_study2, bic_study3, bic_study4] # grouping BIC values from different models together
 
-min_aic_index = np.argmin(aic_values) # looking for the position of the minimum AIC
-min_bic_index = np.argmin(bic_values) # looking for the position of the minimum BIC
+min_aic_pos = np.argmin(aic_values) # looking for the position of the minimum AIC
+min_bic_pos = np.argmin(bic_values) # looking for the position of the minimum BIC
 
 # Print the results (TODO: find a way to print name of the model of what we ran)
 print("Choosing the model with smallest AIC:")
 for i, aic in enumerate(aic_values):
-    print(f"Model {i+1}: AIC = {aic} {'(Best)' if i == min_aic_index else ''}")
+    print(f"Model {i+1}: AIC = {aic} {'(Best)' if i == min_aic_pos else ''}")
 
 print("Choosing the model with smallest BIC:")
 for i, bic in enumerate(bic_values):
-    print(f"Model {i+1}: BIC = {bic} {'(Best)' if i == min_bic_index else ''}")
+    print(f"Model {i+1}: BIC = {bic} {'(Best)' if i == min_bic_pos else ''}")
     
     
 # displaying smoothed probabilities of low and high variance regimes for the type of model that we want to choose
