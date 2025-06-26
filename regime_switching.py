@@ -86,8 +86,10 @@ plt.legend() # including legend in the plot
 plt.show() # displaying the plot in the plots environment
 
 
-
+## Markov autoregression model estimation with multiple possibilities for number of states
 number_states = [2, 3, 4, 5]  # estimation under different numbers of states
+aligned_dates_sp = stock_data['Date'][1:].reset_index(drop = True)
+aligned_dates_mp = aligned_dates_sp[1:].reset_index(drop = True)
 
 for number_state in number_states: # looping over the established number of states
 
@@ -98,13 +100,177 @@ for number_state in number_states: # looping over the established number of stat
         switching_ar = True  # enabling regime switching for AR coefficient
     )
 
-    model_results = model.fit() # fitting the model
-
+    model_results_study1 = model.fit() # fitting the model
+    
+    
     # plotting the model results
     fig, axes = plt.subplots(2, figsize = (12, 6)) # initialization of the plot and setting size of the plot
-    model_results.smoothed_marginal_probabilities.plot(stock_data['Date'], ax = axes[0], title = f'Markov regime-switching model with {number_state} states') # smoothed refers to an estimate of the probability at time t using all data in the sample 
+
+    for i in range(number_state): # looping over number of states considered
+        axes[0].plot(aligned_dates_sp, model_results_study1.smoothed_marginal_probabilities[i], label = f'State {i}') # plotting smoothed marginal probabilities with dates; smoothed refers to an estimate of the probability at time t using all data in the sample 
+    axes[0].set_title(f'Markov regime-switching model with {number_state} states') # title of first subplot
     axes[0].set_ylabel('State probability') # state probabilities are on the y-axis of first subplot
-    # add x label
-    model_results.predict().plot(ax = axes[1])
+    axes[0].legend() # including legend of the plot
+    axes[0].tick_params(axis = 'x', rotation = 90) # formatting the x-axis to show dates vertically
+
+    axes[1].plot(aligned_dates_mp, model_results_study1.predict(), label = 'Forecasted stock returns') # plotting model predicted values of stock returns with dates
     axes[1].set_ylabel('Stock returns') # stock returns are on the y-axis of second subplot
-    plt.show() # displaying the plot in the plots environment
+    axes[1].tick_params(axis = 'x', rotation = 90) # formatting the x-axis to show dates vertically
+
+    plt.tight_layout() # tightening the layout
+    plt.show() # displaying the subplots
+    
+    
+## Markov autoregression model estimation with single possibility for number of states and allowing for constant or varying mean and/or variance
+number_states = [2]  # estimation under only one number of states
+aligned_dates_sp = stock_data['Date'][1:].reset_index(drop = True)
+aligned_dates_mp = aligned_dates_sp[1:].reset_index(drop = True)
+
+for number_state in number_states: # looping over the established number of states
+
+    model = MarkovAutoregression( # creating a Markov switching autoregression model
+        endog = stock_data['Stock returns'], # the endogeneous variable is identified with the stock returns
+        k_regimes = number_state, # number of regimes
+        order = 1, # the order of the autoregressive model is set to be 1, therefore an AR(1) model will be estimated
+        switching_ar = True,  # enabling regime switching for AR coefficient
+        switching_trend = True # enabling regime switching for all trend coefficients
+    )
+
+    model_results_study2 = model.fit() # fitting the model
+    
+    
+    # plotting the model results
+    fig, axes = plt.subplots(2, figsize = (12, 6)) # initialization of the plot and setting size of the plot
+
+    for i in range(number_state): # looping over number of states considered
+        axes[0].plot(aligned_dates_sp, model_results_study2.smoothed_marginal_probabilities[i], label = f'State {i}') # plotting smoothed marginal probabilities with dates; smoothed refers to an estimate of the probability at time t using all data in the sample 
+    axes[0].set_title(f'Markov regime-switching model with {number_state} states') # title of first subplot
+    axes[0].set_ylabel('State probability') # state probabilities are on the y-axis of first subplot
+    axes[0].legend() # including legend of the plot
+    axes[0].tick_params(axis = 'x', rotation = 90) # formatting the x-axis to show dates vertically
+
+    axes[1].plot(aligned_dates_mp, model_results_study2.predict(), label = 'Forecasted stock returns') # plotting model predicted values of stock returns with dates
+    axes[1].set_ylabel('Stock returns') # stock returns are on the y-axis of second subplot
+    axes[1].tick_params(axis = 'x', rotation = 90) # formatting the x-axis to show dates vertically
+
+    plt.tight_layout() # tightening the layout
+    plt.show() # displaying the subplots
+    
+    aic_study2 = model_results_study2.aic # calculating Akaike Information Criteria of model results
+    bic_study2 = model_results_study2.bic # calculating Bayesian Information Criteria of model results
+
+    print("AIC:", aic_study2) # printing AIC value
+    print("BIC:", aic_study2) # printing BIC value
+
+
+number_states = [2]  # estimation under only one number of states
+aligned_dates_sp = stock_data['Date'][1:].reset_index(drop = True)
+aligned_dates_mp = aligned_dates_sp[1:].reset_index(drop = True)
+
+
+for number_state in number_states: # looping over the established number of states
+
+    model = MarkovAutoregression( # creating a Markov switching autoregression model
+        endog = stock_data['Stock returns'], # the endogeneous variable is identified with the stock returns
+        k_regimes = number_state, # number of regimes
+        order = 1, # the order of the autoregressive model is set to be 1, therefore an AR(1) model will be estimated
+        switching_ar = True,  # enabling regime switching for AR coefficient
+        switching_variance = True #
+    )
+
+    model_results_study3 = model.fit() # fitting the model
+    
+    
+    # plotting the model results
+    fig, axes = plt.subplots(2, figsize = (12, 6)) # initialization of the plot and setting size of the plot
+
+    for i in range(number_state): # looping over number of states considered
+        axes[0].plot(aligned_dates_sp, model_results_study3.smoothed_marginal_probabilities[i], label = f'State {i}') # plotting smoothed marginal probabilities with dates; smoothed refers to an estimate of the probability at time t using all data in the sample 
+    axes[0].set_title(f'Markov regime-switching model with {number_state} states') # title of first subplot
+    axes[0].set_ylabel('State probability') # state probabilities are on the y-axis of first subplot
+    axes[0].legend() # including legend of the plot
+    axes[0].tick_params(axis = 'x', rotation = 90) # formatting the x-axis to show dates vertically
+
+    axes[1].plot(aligned_dates_mp, model_results_study3.predict(), label = 'Forecasted stock returns') # plotting model predicted values of stock returns with dates
+    axes[1].set_ylabel('Stock returns') # stock returns are on the y-axis of second subplot
+    axes[1].tick_params(axis = 'x', rotation = 90) # formatting the x-axis to show dates vertically
+
+    plt.tight_layout() # tightening the layout
+    plt.show() # displaying the subplots
+    
+    # Calculate AIC, BIC
+    aic_study3 = model_results_study3.aic # calculating Akaike Information Criteria of model results
+    bic_study3 = model_results_study3.bic # calculating Bayesian Information Criteria of model results
+
+    print("AIC:", aic_study3) # printing AIC value
+    print("BIC:", bic_study3) # printing BIC value
+    
+
+for number_state in number_states: # looping over the established number of states
+
+    model = MarkovAutoregression( # creating a Markov switching autoregression model
+        endog = stock_data['Stock returns'], # the endogeneous variable is identified with the stock returns
+        k_regimes = number_state, # number of regimes
+        order = 1, # the order of the autoregressive model is set to be 1, therefore an AR(1) model will be estimated
+        switching_ar = True,  # enabling regime switching for AR coefficient
+        switching_trend = True, # enabling regime switching for all trend coefficients
+        switching_variance = True 
+    )
+
+    model_results_study4 = model.fit() # fitting the model
+    
+    
+    # plotting the model results
+    fig, axes = plt.subplots(2, figsize = (12, 6)) # initialization of the plot and setting size of the plot
+
+    for i in range(number_state): # looping over number of states considered
+        axes[0].plot(aligned_dates_sp, model_results_study4.smoothed_marginal_probabilities[i], label = f'State {i}') # plotting smoothed marginal probabilities with dates; smoothed refers to an estimate of the probability at time t using all data in the sample 
+    axes[0].set_title(f'Markov regime-switching model with {number_state} states') # title of first subplot
+    axes[0].set_ylabel('State probability') # state probabilities are on the y-axis of first subplot
+    axes[0].legend() # including legend of the plot
+    axes[0].tick_params(axis = 'x', rotation = 90) # formatting the x-axis to show dates vertically
+
+    axes[1].plot(aligned_dates_mp, model_results_study4.predict(), label = 'Forecasted stock returns') # plotting model predicted values of stock returns with dates
+    axes[1].set_ylabel('Stock returns') # stock returns are on the y-axis of second subplot
+    axes[1].tick_params(axis = 'x', rotation = 90) # formatting the x-axis to show dates vertically
+
+    plt.tight_layout() # tightening the layout
+    plt.show() # displaying the subplots
+    
+    aic_study4 = model_results_study4.aic # calculating Akaike Information Criteria of model results
+    bic_study4 = model_results_study4.bic # calculating Bayesian Information Criteria of model results
+
+    print("AIC:", aic_study4) # printing AIC value
+    print("BIC:", bic_study4) # printing BIC value
+
+
+
+# Example AIC and BIC values for different models
+aic_values = [aic_study2, aic_study3, aic_study4]
+bic_values = [bic_study2, bic_study3, bic_study4]
+
+min_aic_index = np.argmin(aic_values) # looking for the position of the minimum AIC
+min_bic_index = np.argmin(bic_values) # looking for the position of the minimum BIC
+
+# Print the results (TODO: find a way to print name of the model of what we ran)
+print("Choosing the model with smallest AIC:")
+for i, aic in enumerate(aic_values):
+    print(f"Model {i+1}: AIC = {aic} {'(Best)' if i == min_aic_index else ''}")
+
+print("Choosing the model with smallest BIC:")
+for i, bic in enumerate(bic_values):
+    print(f"Model {i+1}: BIC = {bic} {'(Best)' if i == min_bic_index else ''}")
+    
+    
+# displaying smoothed probabilities of low and high variance regimes for the type of model that we want to choose
+# TODO: create an interface to select the model you want to display this for
+fig, axes = plt.subplots(2, figsize=(10,7))
+ax = axes[0]
+ax.plot(results_all.smoothed_marginal_probabilities[0])
+ax.grid(False)
+ax.set(title='Smoothed probability of a low-variance regime returns')
+ax = axes[1]
+ax.plot(results_all.smoothed_marginal_probabilities[1])
+ax.set(title='Smoothed probability of a high-variance regime returns')
+fig.tight_layout()
+ax.grid(False)
