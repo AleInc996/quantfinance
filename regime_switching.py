@@ -21,6 +21,16 @@ import yfinance.shared as shared
 from statsmodels.tsa.regime_switching.markov_autoregression import MarkovAutoregression
 
 
+# function to identify the type of model that was run
+def model_identification():
+    
+    """
+    This function identifies the type of Markov autoregression model that was selected
+    in order to be printed with final analyses.
+    """
+    
+    
+
 # function for data retrieval first defined in non_stationarity code of the repo
 def get_usable_data(ticker_choice, start_date, end_date, frequency = '1d'):
     
@@ -162,6 +172,35 @@ for number_state in number_states: # looping over the established number of stat
 
     print("AIC:", aic_study2) # printing AIC value
     print("BIC:", aic_study2) # printing BIC value
+    
+model_name = []
+# creating the name of type of model run
+if len(number_states) > 1:
+    if model.switching_ar == True and model.switching_trend == False and model.switching_variance == False:
+        model_name = 'multiple_states_ARswitching'
+    elif model.switching_ar == False and model.switching_trend == True and model.switching_variance == False:
+        model_name = 'multiple_states_TRENDswitching'
+    elif model.switching_ar == False and model.switching_trend == False and model.switching_variance == True:
+        model_name = 'multiple_states_VARIANCEswitching'
+    elif model.switching_ar == True and model.switching_trend == True and model.switching_variance == False:
+        model_name = 'multiple_states__AR_TRENDswitching'
+    elif model.switching_ar == True and model.switching_trend == False and model.switching_variance == True:
+        model_name = 'multiple_states__AR_VARIANCEswitching'
+    elif model.switching_ar == False and model.switching_trend == True and model.switching_variance == True:
+        model_name = 'multiple_states__TREND_VARIANCEswitching'
+elif len(number_states) == 1:
+    if model.switching_ar == True and model.switching_trend == False and model.switching_variance == False:
+        model_name = 'single_state_ARswitching'
+    elif model.switching_ar == False and model.switching_trend == True and model.switching_variance == False:
+        model_name = 'single_state_TRENDswitching'
+    elif model.switching_ar == False and model.switching_trend == False and model.switching_variance == True:
+        model_name = 'single_state_VARIANCEswitching'
+    elif model.switching_ar == True and model.switching_trend == True and model.switching_variance == False:
+        model_name = 'single_state__AR_TRENDswitching'
+    elif model.switching_ar == True and model.switching_trend == False and model.switching_variance == True:
+        model_name = 'single_state__AR_VARIANCEswitching'
+    elif model.switching_ar == False and model.switching_trend == True and model.switching_variance == True:
+        model_name = 'single_state__TREND_VARIANCEswitching'
 
 
 number_states = [2]  # estimation under only one number of states, you can set this to whatever number you wish
@@ -248,14 +287,15 @@ for number_state in number_states: # looping over the established number of stat
 
 aic_values = [aic_study2, aic_study3, aic_study4] # grouping AIC values from different models together
 bic_values = [bic_study2, bic_study3, bic_study4] # grouping BIC values from different models together
+models = [model_results_study2, model_results_study3, model_results_study4]
 
 min_aic_pos = np.argmin(aic_values) # looking for the position of the minimum AIC
 min_bic_pos = np.argmin(bic_values) # looking for the position of the minimum BIC
 
 # Print the results (TODO: find a way to print name of the model of what we ran)
 print("Choosing the model with smallest AIC:")
-for i, aic in enumerate(aic_values):
-    print(f"Model {i+1}: AIC = {aic} {'(Best)' if i == min_aic_pos else ''}")
+for i, aic in enumerate(aic_values) and i, model in enumerate(models):
+    print(f"Model {i}: AIC = {aic} {'(Best)' if i == min_aic_pos else ''}")
 
 print("Choosing the model with smallest BIC:")
 for i, bic in enumerate(bic_values):
