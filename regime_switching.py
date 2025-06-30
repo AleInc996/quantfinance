@@ -29,6 +29,41 @@ def model_identification():
     in order to be printed with final analyses.
     """
     
+    model_name = []
+    # creating the name of type of model run
+    if len(number_states) > 1:
+        if model.switching_ar == [True] and model.switching_trend == [False] and model.switching_variance == False:
+            model_name = 'multiple_states_ARswitching'
+        elif model.switching_ar == [False] and model.switching_trend == [True] and model.switching_variance == False:
+            model_name = 'multiple_states_TRENDswitching'
+        elif model.switching_ar == [False] and model.switching_trend == [False] and model.switching_variance == True:
+            model_name = 'multiple_states_VARIANCEswitching'
+        elif model.switching_ar == [True] and model.switching_trend == [True] and model.switching_variance == False:
+            model_name = 'multiple_states__AR_TRENDswitching'
+        elif model.switching_ar == [True] and model.switching_trend == [False] and model.switching_variance == True:
+            model_name = 'multiple_states__AR_VARIANCEswitching'
+        elif model.switching_ar == [False] and model.switching_trend == [True] and model.switching_variance == True:
+            model_name = 'multiple_states__TREND_VARIANCEswitching'
+        elif model.switching_ar == [True] and model.switching_trend == [True] and model.switching_variance == True:
+            model_name = 'multiple_states__AR_TREND_VARIANCEswitching'
+    elif len(number_states) == 1:
+        if model.switching_ar == [True] and model.switching_trend == [False] and model.switching_variance == False:
+            model_name = 'single_state_ARswitching'
+        elif model.switching_ar == [False] and model.switching_trend == [True] and model.switching_variance == False:
+            model_name = 'single_state_TRENDswitching'
+        elif model.switching_ar == [False] and model.switching_trend == [False] and model.switching_variance == True:
+            model_name = 'single_state_VARIANCEswitching'
+        elif model.switching_ar == [True] and model.switching_trend == [True] and model.switching_variance == False:
+            model_name = 'single_state__AR_TRENDswitching'
+        elif model.switching_ar == [True] and model.switching_trend == [False] and model.switching_variance == True:
+            model_name = 'single_state__AR_VARIANCEswitching'
+        elif model.switching_ar == [False] and model.switching_trend == [True] and model.switching_variance == True:
+            model_name = 'single_state__TREND_VARIANCEswitching'
+        elif model.switching_ar == [True] and model.switching_trend == [True] and model.switching_variance == True:
+            model_name = 'single_state__AR_TREND_VARIANCEswitching'
+            
+    return model_name
+    
     
 
 # function for data retrieval first defined in non_stationarity code of the repo
@@ -46,6 +81,8 @@ def get_usable_data(ticker_choice, start_date, end_date, frequency = '1d'):
     else:
         print('The ticker', ticker_choice, 'does not exist or may be removed from Yahoo finance API, please use another one', file = sys.stderr)
     return x
+
+
 
 ticker_choice = 'AAPL' # choosing the stock we want to analyze
 start_date = '2019-01-01' # choosing beginning of the period
@@ -97,6 +134,11 @@ plt.legend() # including legend in the plot
 plt.show() # displaying the plot in the plots environment
 
 
+models_name = []
+aic_values = []
+bic_values = []
+
+
 ## Markov autoregression model estimation with multiple possibilities for number of states
 number_states = [2, 3, 4, 5]  # estimation under different numbers of states, you can change this to whatever you wish
 aligned_dates_sp = stock_data['Date'][1:].reset_index(drop = True) # aligning length of dates to length of smoothed marginal probabilities
@@ -108,7 +150,9 @@ for number_state in number_states: # looping over the established number of stat
         endog = stock_data['Stock returns'], # the endogeneous variable is identified with the stock returns
         k_regimes = number_state, # number of regimes
         order = 1, # the order of the autoregressive model is set to be 1, therefore an AR(1) model will be estimated
-        switching_ar = True  # enabling regime switching for AR coefficient
+        switching_ar = True, # enabling regime switching for AR coefficient
+        switching_trend = False,
+        switching_variance = False
     )
 
     model_results_study1 = model.fit() # fitting the model
@@ -143,9 +187,10 @@ for number_state in number_states: # looping over the established number of stat
         endog = stock_data['Stock returns'], # the endogeneous variable is identified with the stock returns
         k_regimes = number_state, # number of regimes
         order = 1, # the order of the autoregressive model is set to be 1, therefore an AR(1) model will be estimated
-        switching_ar = True,  # enabling regime switching for AR coefficient
-        switching_trend = True # enabling regime switching for all trend coefficients
-    )
+        switching_ar = True, # enabling regime switching for AR coefficient
+        switching_trend = True, # and for all trend coefficients
+        switching_variance = False
+    ) 
 
     model_results_study2 = model.fit() # fitting the model
     
@@ -173,34 +218,10 @@ for number_state in number_states: # looping over the established number of stat
     print("AIC:", aic_study2) # printing AIC value
     print("BIC:", aic_study2) # printing BIC value
     
-model_name = []
-# creating the name of type of model run
-if len(number_states) > 1:
-    if model.switching_ar == True and model.switching_trend == False and model.switching_variance == False:
-        model_name = 'multiple_states_ARswitching'
-    elif model.switching_ar == False and model.switching_trend == True and model.switching_variance == False:
-        model_name = 'multiple_states_TRENDswitching'
-    elif model.switching_ar == False and model.switching_trend == False and model.switching_variance == True:
-        model_name = 'multiple_states_VARIANCEswitching'
-    elif model.switching_ar == True and model.switching_trend == True and model.switching_variance == False:
-        model_name = 'multiple_states__AR_TRENDswitching'
-    elif model.switching_ar == True and model.switching_trend == False and model.switching_variance == True:
-        model_name = 'multiple_states__AR_VARIANCEswitching'
-    elif model.switching_ar == False and model.switching_trend == True and model.switching_variance == True:
-        model_name = 'multiple_states__TREND_VARIANCEswitching'
-elif len(number_states) == 1:
-    if model.switching_ar == True and model.switching_trend == False and model.switching_variance == False:
-        model_name = 'single_state_ARswitching'
-    elif model.switching_ar == False and model.switching_trend == True and model.switching_variance == False:
-        model_name = 'single_state_TRENDswitching'
-    elif model.switching_ar == False and model.switching_trend == False and model.switching_variance == True:
-        model_name = 'single_state_VARIANCEswitching'
-    elif model.switching_ar == True and model.switching_trend == True and model.switching_variance == False:
-        model_name = 'single_state__AR_TRENDswitching'
-    elif model.switching_ar == True and model.switching_trend == False and model.switching_variance == True:
-        model_name = 'single_state__AR_VARIANCEswitching'
-    elif model.switching_ar == False and model.switching_trend == True and model.switching_variance == True:
-        model_name = 'single_state__TREND_VARIANCEswitching'
+model2_name = model_identification()
+models_name.append(model2_name)
+aic_values.append(aic_study2)
+bic_values.append(bic_study2)
 
 
 number_states = [2]  # estimation under only one number of states, you can set this to whatever number you wish
@@ -214,8 +235,9 @@ for number_state in number_states: # looping over the established number of stat
         endog = stock_data['Stock returns'], # the endogeneous variable is identified with the stock returns
         k_regimes = number_state, # number of regimes
         order = 1, # the order of the autoregressive model is set to be 1, therefore an AR(1) model will be estimated
-        switching_ar = True,  # enabling regime switching for AR coefficient
-        switching_variance = True #
+        switching_ar = True, # enabling regime switching for AR coefficient
+        switching_trend = False, # not for all trend coefficients
+        switching_variance = True # and for
     )
 
     model_results_study3 = model.fit() # fitting the model
@@ -245,6 +267,11 @@ for number_state in number_states: # looping over the established number of stat
     print("AIC:", aic_study3) # printing AIC value
     print("BIC:", bic_study3) # printing BIC value
     
+model3_name = model_identification()
+models_name.append(model3_name)
+aic_values.append(aic_study3)
+bic_values.append(bic_study3)
+    
 
 for number_state in number_states: # looping over the established number of states
 
@@ -252,9 +279,9 @@ for number_state in number_states: # looping over the established number of stat
         endog = stock_data['Stock returns'], # the endogeneous variable is identified with the stock returns
         k_regimes = number_state, # number of regimes
         order = 1, # the order of the autoregressive model is set to be 1, therefore an AR(1) model will be estimated
-        switching_ar = True,  # enabling regime switching for AR coefficient
-        switching_trend = True, # enabling regime switching for all trend coefficients
-        switching_variance = True 
+        switching_ar = True, # enabling regime switching for AR coefficient
+        switching_trend = True, # and for all trend coefficients
+        switching_variance = True # and
     )
 
     model_results_study4 = model.fit() # fitting the model
@@ -282,24 +309,26 @@ for number_state in number_states: # looping over the established number of stat
 
     print("AIC:", aic_study4) # printing AIC value
     print("BIC:", bic_study4) # printing BIC value
+    
+model4_name = model_identification()
+models_name.append(model4_name)
+aic_values.append(aic_study4)
+bic_values.append(bic_study4)
 
 
 
-aic_values = [aic_study2, aic_study3, aic_study4] # grouping AIC values from different models together
-bic_values = [bic_study2, bic_study3, bic_study4] # grouping BIC values from different models together
-models = [model_results_study2, model_results_study3, model_results_study4]
 
 min_aic_pos = np.argmin(aic_values) # looking for the position of the minimum AIC
 min_bic_pos = np.argmin(bic_values) # looking for the position of the minimum BIC
 
-# Print the results (TODO: find a way to print name of the model of what we ran)
+
 print("Choosing the model with smallest AIC:")
-for i, aic in enumerate(aic_values) and i, model in enumerate(models):
-    print(f"Model {i}: AIC = {aic} {'(Best)' if i == min_aic_pos else ''}")
+for i, aic in enumerate(aic_values):
+    print(f"Model {models_name[i]}: AIC = {aic} {'(Best)' if i == min_aic_pos else ''}")
 
 print("Choosing the model with smallest BIC:")
 for i, bic in enumerate(bic_values):
-    print(f"Model {i+1}: BIC = {bic} {'(Best)' if i == min_bic_pos else ''}")
+    print(f"Model {models_name[i]}: BIC = {bic} {'(Best)' if i == min_bic_pos else ''}")
     
     
 # displaying smoothed probabilities of low and high variance regimes for the type of model that we want to choose
