@@ -10,19 +10,13 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import yfinance as yf
-from scipy.stats import norm
-import scipy.stats as scs
-import statsmodels.api as sm
-import statsmodels.formula.api as smf
-from statsmodels.stats.outliers_influence import variance_inflation_factor
-import seaborn as sns
 import sys
 import yfinance.shared as shared
 from statsmodels.tsa.regime_switching.markov_autoregression import MarkovAutoregression
 
 
 # function to identify the type of model that was run
-def model_identification():
+def model_identification(model_selection = None):
     
     """
     This function identifies the type of Markov autoregression model that was selected
@@ -30,8 +24,12 @@ def model_identification():
     """
     
     model_name = []
+    model_analysis = []
+    
+    if model_selection != None:
+        
     # creating the name of type of model run
-    if len(number_states) > 1:
+    elif len(number_states) > 1:
         if model.switching_ar == [True] and model.switching_trend == [False] and model.switching_variance == False:
             model_name = 'multiple_states_ARswitching'
         elif model.switching_ar == [False] and model.switching_trend == [True] and model.switching_variance == False:
@@ -322,15 +320,36 @@ min_aic_pos = np.argmin(aic_values) # looking for the position of the minimum AI
 min_bic_pos = np.argmin(bic_values) # looking for the position of the minimum BIC
 
 
-print("Choosing the model with smallest AIC:")
-for i, aic in enumerate(aic_values):
-    print(f"Model {models_name[i]}: AIC = {aic} {'(Best)' if i == min_aic_pos else ''}")
+if len(models_name) != len(aic_values):
+    print("Number of models run should be the same as AIC values produced. Check that everything was run properly.")
+else:
+   print("Choosing the model with smallest AIC:")
+   for i, aic in enumerate(aic_values):
+       print(f"Model {models_name[i]}: AIC = {aic} {'(Best)' if i == min_aic_pos else ''}") 
 
-print("Choosing the model with smallest BIC:")
-for i, bic in enumerate(bic_values):
-    print(f"Model {models_name[i]}: BIC = {bic} {'(Best)' if i == min_bic_pos else ''}")
-    
-    
+
+if len(models_name) != len(bic_values):
+    print("Number of models run should be the same as BIC values produced. Check that everything was run properly.")
+else:
+    print("Choosing the model with smallest BIC:")
+    for i, bic in enumerate(bic_values):
+        print(f"Model {models_name[i]}: BIC = {bic} {'(Best)' if i == min_bic_pos else ''}")
+
+
+## interactively choosing one model among the ones analyzed
+choices = models_name # the possible choices are the models run during the analysis
+model_selection = '' # pre-allocating memory for the choice that the user will make
+input_message = "Which among the following models would you like to visualize smoothed probabilities of low and high variance regimes for?\n" # question
+
+for index, model in enumerate(choices): # looping over possible choices
+    input_message += f'{index+1}) {model}\n' # showing possible choices
+
+input_message += 'Your choice: ' # message to ask for the choice
+model_selection = input(input_message) # giving the user the possibility to write his/her own choice
+print('You picked: ' + model_selection) # printing final choice
+
+
+
 # displaying smoothed probabilities of low and high variance regimes for the type of model that we want to choose
 # TODO: create an interface to select the model you want to display this for
 fig, axes = plt.subplots(2, figsize=(10,7))
