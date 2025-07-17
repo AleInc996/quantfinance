@@ -21,11 +21,19 @@ from sklearn.model_selection import train_test_split
 import tensorflow as tf
 
 # function for data retrieval first defined in non_stationarity code of the repo
-def get_usable_data(ticker_choice, start_date, end_date):
+def get_usable_data(ticker_choice, start_date, end_date, frequency = '1d'):
     
-    "This function simply accesses yahoo finance API to obtain prices data and returns an error if the written ticker does not exist"
+    """
+    This function simply accesses yahoo finance API to obtain prices data 
+    and returns an error if the written ticker does not exist.
+    In addition to the ticker, this function takes beginning and end dates as inputs,
+    together with the desired frequency of the data.
     
-    x = yf.download(ticker_choice, start = start_date, end = end_date, multi_level_index = False, auto_adjust = False) # returns daily prices of the selected ticker
+    The need for this function became useful after recent changes to yahoo finance library in Python,
+    therefore standardizing the use of this library.
+    """
+    
+    x = yf.download(ticker_choice, start = start_date, end = end_date, interval = frequency, multi_level_index = False, auto_adjust = False) # returns daily prices of the selected ticker
     if not list(shared._ERRORS.keys()):
         print(x)
     else:
@@ -43,7 +51,7 @@ stock_rets = stock_rets.drop(['Open', 'High', 'Low', 'Close', 'Adj Close', 'Volu
 
 # the idea is to make a sort of momentum study and analyze how current returns (the output variable) depend on returns from the past 21, 42, 63, 126 and 240 days.
 # those number of days are chosen because they represent the trading days in one month, 2 months, 3 months and 6 months
-# however feel free to change them as you wish
+# however feel free to change them as you wish (below by modifying the numbers of the rolling days variables)
 
 # defining variables for the rolling days as it is needed for columns names
 roll1 = 21 # first variable rolling days
@@ -93,33 +101,37 @@ model.add(tf.keras.layers.Dropout(dropout_rate)) # dropout rate of the third lay
 model.add(tf.keras.layers.Dense(units = 1, activation = "sigmoid")) # output layer, with dimensionality space equal to 1 and sigmoid activation function, as we want outputs to be binary
 
 learning_rate = 1e-5  # defining the learning rate
-adam = tf.keras.optimizers.Adam(learning_rate)  # Adam is the optimizer selected (feel free to use something else), which takes the learning rate as input
+optimizer = tf.keras.optimizers.Adam(learning_rate)  # Adam is the optimizer selected (feel free to use something else), which takes the learning rate as input
 
-model.compile(optimizer = adam, loss = "binary_crossentropy", metrics = ["accuracy"])
+model.compile( # the model with layers is compiled using
+    optimizer = optimizer, # indicating the optimizer chosen in previous line of code
+    loss = "binary_crossentropy", # the loss is selected as binary cross entropy but it can be modified, the important thing here is to have a probabilistic loss, as we have 0 and 1 for the dependent variable
+    metrics = ["accuracy"]) # the accuracy metrics calculates how often predictions equal labels
 
 ## model training
-es = tf.keras.callbacks.EarlyStopping(
-    monitor="val_accuracy",
-    mode="max",
-    verbose=1,
-    patience=20,
-    restore_best_weights=True,
+early_stopping = tf.keras.callbacks.EarlyStopping( # here the idea is to train the model until one of the monitored metrics of this training has stopped improving
+    monitor = "val_accuracy",
+    mode = "max",
+    verbose = 1,
+    patience = 20,
+    restore_best_weights = True,
 )
 
 
-class_weight = {0: (np.mean(y_train) / 0.5) * 1.2, 1: 1.0}
+class_weight = {0: (np.mean(y_train) / 0.5) * 1.2, 1: 1.0} # ?? (TODO: after knowing what it is, change the variable name and the printing)
 print(class_weight)
 
 
-history = model.fit(
+training_history_epoch = model.fit( # showing what happens with training for each epoch
     X_train,
     y_train,
-    validation_split=0.2,
-    epochs=500,
-    batch_size=32,
-    verbose=2,
-    callbacks=[es],
-    class_weight=class_weight,
+    validation_split = 0.2,
+    epochs = 500,
+    batch_size = 32,
+    verbose = 2,
+    callbacks = [early_stopping],
+    class_weight = class_weight,
 )
 
 model.summary()
+
